@@ -338,7 +338,7 @@ PERF_TEST_P(Sz_Depth, CountNonZero,
 //////////////////////////////////////////////////////////////////////
 // Reduce
 
-CV_ENUM(ReduceCode, REDUCE_SUM, REDUCE_AVG, REDUCE_MAX, REDUCE_MIN)
+CV_ENUM(ReduceCode, REDUCE_SUM, REDUCE_AVG, REDUCE_MAX, REDUCE_MIN, REDUCE_SUM2)
 
 enum {Rows = 0, Cols = 1};
 CV_ENUM(ReduceDim, Rows, Cols)

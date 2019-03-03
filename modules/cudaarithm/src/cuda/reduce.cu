@@ -81,6 +81,10 @@ namespace
         case cv::REDUCE_MAX:
             gridReduceToRow< Max<S> >(src, dst, stream);
             break;
+
+        case cv::REDUCE_SUM2:
+            gridReduceToRow< Sum2<S> >(src, dst, stream);
+            break;
         };
     }
 
@@ -107,6 +111,10 @@ namespace
         case cv::REDUCE_MAX:
             gridReduceToColumn< Max<S> >(src, dst, stream);
             break;
+
+        case cv::REDUCE_SUM2:
+            gridReduceToColumn< Sum2<S> >(src, dst, stream);
+            break;
         };
     }
 
@@ -132,7 +140,7 @@ void cv::cuda::reduce(InputArray _src, OutputArray _dst, int dim, int reduceOp, 
 
     CV_Assert( src.channels() <= 4 );
     CV_Assert( dim == 0 || dim == 1 );
-    CV_Assert( reduceOp == REDUCE_SUM || reduceOp == REDUCE_AVG || reduceOp == REDUCE_MAX || reduceOp == REDUCE_MIN );
+    CV_Assert( reduceOp == REDUCE_SUM || reduceOp == REDUCE_AVG || reduceOp == REDUCE_MAX || reduceOp == REDUCE_MIN || reduceOp == REDUCE_SUM2 );
 
     if (dtype < 0)
         dtype = src.depth();

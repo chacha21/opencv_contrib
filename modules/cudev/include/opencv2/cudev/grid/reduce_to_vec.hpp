@@ -142,6 +142,27 @@ template <typename T> struct Max : maximum<T>
     }
 };
 
+template <typename T> struct Sum2 : Compose2nd<sqr<T>, plus<T> >
+{
+    typedef T work_type;
+
+    template <typename U> struct rebind
+    {
+        typedef Sum2<U> other;
+    };
+
+    __device__ __forceinline__ static T initialValue()
+    {
+        return VecTraits<T>::all(0);
+    }
+
+    __device__ __forceinline__ static T result(T r, int)
+    {
+        return saturate_cast<T>(r);
+    }
+};
+
+
 template <class Reductor, class SrcPtr, typename ResType, class MaskPtr>
 __host__ void gridReduceToRow(const SrcPtr& src, GpuMat_<ResType>& dst, const MaskPtr& mask, Stream& stream = Stream::Null())
 {

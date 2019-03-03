@@ -216,6 +216,23 @@ TEST(ReduceToRow, Max)
     EXPECT_MAT_NEAR(dst_gold, dst, 0.0);
 }
 
+TEST(ReduceToRow, Sum2)
+{
+    const Size size = randomSize(100, 400);
+
+    Mat src = randomMat(size, CV_8UC1);
+
+    GpuMat_<uchar> d_src(src);
+
+    GpuMat_<float> dst = reduceToRow_<Sum2<float> >(d_src);
+
+    Mat dst_gold;
+    cv::reduce(src, dst_gold, 0, REDUCE_SUM2, CV_32F);
+
+    EXPECT_MAT_NEAR(dst_gold, dst, 1e-4);
+}
+
+
 TEST(ReduceToColumn, Sum)
 {
     const Size size = randomSize(100, 400);
@@ -276,6 +293,22 @@ TEST(ReduceToColumn, Max)
 
     Mat dst_gold;
     cv::reduce(src, dst_gold, 1, REDUCE_MAX);
+
+    EXPECT_MAT_NEAR(dst_gold, dst, 0.0);
+}
+
+TEST(ReduceToColumn, Sum2)
+{
+    const Size size = randomSize(100, 400);
+
+    Mat src = randomMat(size, CV_8UC1);
+
+    GpuMat_<uchar> d_src(src);
+
+    GpuMat_<uchar> dst = reduceToColumn_<Sum2<uchar> >(d_src);
+
+    Mat dst_gold;
+    cv::reduce(src, dst_gold, 1, REDUCE_SUM2);
 
     EXPECT_MAT_NEAR(dst_gold, dst, 0.0);
 }

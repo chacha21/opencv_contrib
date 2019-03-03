@@ -819,8 +819,8 @@ INSTANTIATE_TEST_CASE_P(CUDA_Arithm, CountNonZero, testing::Combine(
 //////////////////////////////////////////////////////////////////////////////
 // Reduce
 
-CV_ENUM(ReduceCode, cv::REDUCE_SUM, cv::REDUCE_AVG, cv::REDUCE_MAX, cv::REDUCE_MIN)
-#define ALL_REDUCE_CODES testing::Values(ReduceCode(cv::REDUCE_SUM), ReduceCode(cv::REDUCE_AVG), ReduceCode(cv::REDUCE_MAX), ReduceCode(cv::REDUCE_MIN))
+CV_ENUM(ReduceCode, cv::REDUCE_SUM, cv::REDUCE_AVG, cv::REDUCE_MAX, cv::REDUCE_MIN, cv::REDUCE_SUM2)
+#define ALL_REDUCE_CODES testing::Values(ReduceCode(cv::REDUCE_SUM), ReduceCode(cv::REDUCE_AVG), ReduceCode(cv::REDUCE_MAX), ReduceCode(cv::REDUCE_MIN), ReduceCode(cv::REDUCE_SUM2))
 
 PARAM_TEST_CASE(Reduce, cv::cuda::DeviceInfo, cv::Size, MatDepth, Channels, ReduceCode, UseRoi)
 {
@@ -850,7 +850,7 @@ PARAM_TEST_CASE(Reduce, cv::cuda::DeviceInfo, cv::Size, MatDepth, Channels, Redu
 
         if (reduceOp == cv::REDUCE_MAX || reduceOp == cv::REDUCE_MIN)
             dst_depth = depth;
-        else if (reduceOp == cv::REDUCE_SUM)
+        else if (reduceOp == cv::REDUCE_SUM || reduceOp == cv::REDUCE_SUM2)
             dst_depth = depth == CV_8U ? CV_32S : depth < CV_64F ? CV_32F : depth;
         else
             dst_depth = depth < CV_32F ? CV_32F : depth;

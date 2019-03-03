@@ -127,6 +127,14 @@ template <typename T> struct negate : unary_function<T, T>
     }
 };
 
+template <typename T> struct sqr : unary_function<T, T>
+{
+    __device__ __forceinline__ T operator ()(typename TypeTraits<T>::parameter_type a) const
+    {
+        return saturate_cast<T>(a*a);
+    }
+};
+
 // Comparison Operations
 
 template <typename T> struct equal_to : binary_function<T, T, typename MakeVec<uchar, VecTraits<T>::cn>::type>
@@ -868,6 +876,51 @@ __host__ __device__ Binder2nd<Op> bind2nd(const Op& op, const typename Op::secon
     b.arg2 = arg2;
     return b;
 }
+
+template <class Op1, class Op2> struct Composer1st : binary_function<typename Op1::argument_type, typename Op2::second_argument_type, typename Op2::result_type>
+{
+    Op1 op1;
+    Op2 op2;
+
+    __device__ __forceinline__ typename Op2::result_type operator ()(
+            typename TypeTraits<typename Op1::argument_type>::parameter_type a,
+            typename TypeTraits<typename Op2::second_argument_type>::parameter_type b) const
+    {
+        return op2(op1(a), b);
+    }
+};
+
+template <class Op1, class Op2>
+__host__ __device__ Composer1st<Op1, Op2> compose1st(const Op1& op1, const Op2& op2)
+{
+    Composer1st<Op1, Op2> c;
+    c.op1 = op1;
+    c.op2 = op2;
+    return c;
+}
+
+template <class Op1, class Op2> struct Composer2nd : binary_function<typename Op1::argument_type, typename Op2::second_argument_type, typename Op2::result_type>
+{
+    Op1 op1;
+    Op2 op2;
+
+    __device__ __forceinline__ typename Op2::result_type operator ()(
+            typename TypeTraits<typename Op2::first_argument_type>::parameter_type a,
+            typename TypeTraits<typename Op1::argument_type>::parameter_type b) const
+    {
+        return op2(a, op1(b));
+    }
+};
+
+template <class Op1, class Op2>
+__host__ __device__ Composer1st<Op1, Op2> compose2nd(const Op1& op1, const Op2& op2)
+{
+    Composer2nd<Op1, Op2> c;
+    c.op1 = op1;
+    c.op2 = op2;
+    return c;
+}
+
 
 // Functor Traits
 
