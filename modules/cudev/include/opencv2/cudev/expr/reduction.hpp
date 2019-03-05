@@ -171,44 +171,44 @@ countNonZero_(const SrcPtr& src)
 
 // reduceToRow
 
-template <class Reductor, class SrcPtr> struct ReduceToRowBody
+template <class Reductor, class ReductorGatherer, class SrcPtr> struct ReduceToRowBody
 {
     SrcPtr src;
 
     template <typename T>
     __host__ void assignTo(GpuMat_<T>& dst, Stream& stream = Stream::Null()) const
     {
-        gridReduceToRow<Reductor>(src, dst, stream);
+        gridReduceToRow<Reductor, ReductorGatherer>(src, dst, stream);
     }
 };
 
-template <class Reductor, class SrcPtr>
-__host__ Expr<ReduceToRowBody<Reductor, SrcPtr> >
+template <class Reductor, class ReductorGatherer, class SrcPtr>
+__host__ Expr<ReduceToRowBody<Reductor, ReductorGatherer, SrcPtr> >
 reduceToRow_(const SrcPtr& src)
 {
-    ReduceToRowBody<Reductor, SrcPtr> body;
+    ReduceToRowBody<Reductor, ReductorGatherer, SrcPtr> body;
     body.src = src;
     return makeExpr(body);
 }
 
 // reduceToColumn
 
-template <class Reductor, class SrcPtr> struct ReduceToColumnBody
+template <class Reductor, class ReductorGatherer, class SrcPtr> struct ReduceToColumnBody
 {
     SrcPtr src;
 
     template <typename T>
     __host__ void assignTo(GpuMat_<T>& dst, Stream& stream = Stream::Null()) const
     {
-        gridReduceToColumn<Reductor>(src, dst, stream);
+        gridReduceToColumn<Reductor, ReductorGatherer>(src, dst, stream);
     }
 };
 
-template <class Reductor, class SrcPtr>
-__host__ Expr<ReduceToColumnBody<Reductor, SrcPtr> >
+template <class Reductor, class ReductorGatherer, class SrcPtr>
+__host__ Expr<ReduceToColumnBody<Reductor, ReductorGatherer, SrcPtr> >
 reduceToColumn_(const SrcPtr& src)
 {
-    ReduceToColumnBody<Reductor, SrcPtr> body;
+    ReduceToColumnBody<Reductor, ReductorGatherer, SrcPtr> body;
     body.src = src;
     return makeExpr(body);
 }

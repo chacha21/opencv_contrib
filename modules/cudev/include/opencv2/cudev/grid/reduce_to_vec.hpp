@@ -142,7 +142,7 @@ template <typename T> struct Max : maximum<T>
     }
 };
 
-template <typename T> struct Sum2 : Compose2nd<sqr<T>, plus<T> >
+template <typename T> struct Sum2 : Composer2nd<sqr<T>, plus<T> >
 {
     typedef T work_type;
 
@@ -163,7 +163,7 @@ template <typename T> struct Sum2 : Compose2nd<sqr<T>, plus<T> >
 };
 
 
-template <class Reductor, class SrcPtr, typename ResType, class MaskPtr>
+template <class Reductor, class ReductorGatherer, class SrcPtr, typename ResType, class MaskPtr>
 __host__ void gridReduceToRow(const SrcPtr& src, GpuMat_<ResType>& dst, const MaskPtr& mask, Stream& stream = Stream::Null())
 {
     const int rows = getRows(src);
@@ -173,14 +173,14 @@ __host__ void gridReduceToRow(const SrcPtr& src, GpuMat_<ResType>& dst, const Ma
 
     dst.create(1, cols);
 
-    grid_reduce_to_vec_detail::reduceToRow<Reductor>(shrinkPtr(src),
+    grid_reduce_to_vec_detail::reduceToRow<Reductor, ReductorGatherer>(shrinkPtr(src),
                                                      dst[0],
                                                      shrinkPtr(mask),
                                                      rows, cols,
                                                      StreamAccessor::getStream(stream));
 }
 
-template <class Reductor, class SrcPtr, typename ResType>
+template <class Reductor, class ReductorGatherer, class SrcPtr, typename ResType>
 __host__ void gridReduceToRow(const SrcPtr& src, GpuMat_<ResType>& dst, Stream& stream = Stream::Null())
 {
     const int rows = getRows(src);
@@ -188,14 +188,14 @@ __host__ void gridReduceToRow(const SrcPtr& src, GpuMat_<ResType>& dst, Stream& 
 
     dst.create(1, cols);
 
-    grid_reduce_to_vec_detail::reduceToRow<Reductor>(shrinkPtr(src),
+    grid_reduce_to_vec_detail::reduceToRow<Reductor, ReductorGatherer>(shrinkPtr(src),
                                                      dst[0],
                                                      WithOutMask(),
                                                      rows, cols,
                                                      StreamAccessor::getStream(stream));
 }
 
-template <class Reductor, class Policy, class SrcPtr, typename ResType, class MaskPtr>
+template <class Reductor, class ReductorGatherer, class Policy, class SrcPtr, typename ResType, class MaskPtr>
 __host__ void gridReduceToColumn_(const SrcPtr& src, GpuMat_<ResType>& dst, const MaskPtr& mask, Stream& stream = Stream::Null())
 {
     const int rows = getRows(src);
@@ -205,14 +205,14 @@ __host__ void gridReduceToColumn_(const SrcPtr& src, GpuMat_<ResType>& dst, cons
 
     cuda::createContinuous(rows, 1, dst.type(), dst);
 
-    grid_reduce_to_vec_detail::reduceToColumn<Reductor, Policy>(shrinkPtr(src),
+    grid_reduce_to_vec_detail::reduceToColumn<Reductor, ReductorGatherer, Policy>(shrinkPtr(src),
                                                                 dst[0],
                                                                 shrinkPtr(mask),
                                                                 rows, cols,
                                                                 StreamAccessor::getStream(stream));
 }
 
-template <class Reductor, class Policy, class SrcPtr, typename ResType>
+template <class Reductor, class ReductorGatherer, class Policy, class SrcPtr, typename ResType>
 __host__ void gridReduceToColumn_(const SrcPtr& src, GpuMat_<ResType>& dst, Stream& stream = Stream::Null())
 {
     const int rows = getRows(src);
@@ -220,7 +220,7 @@ __host__ void gridReduceToColumn_(const SrcPtr& src, GpuMat_<ResType>& dst, Stre
 
     cuda::createContinuous(rows, 1, dst.type(), dst);
 
-    grid_reduce_to_vec_detail::reduceToColumn<Reductor, Policy>(shrinkPtr(src),
+    grid_reduce_to_vec_detail::reduceToColumn<Reductor, ReductorGatherer, Policy>(shrinkPtr(src),
                                                                 dst[0],
                                                                 WithOutMask(),
                                                                 rows, cols,
@@ -237,16 +237,16 @@ struct DefaultReduceToVecPolicy
     };
 };
 
-template <class Reductor, class SrcPtr, typename ResType, class MaskPtr>
+template <class Reductor, class ReductorGatherer, class SrcPtr, typename ResType, class MaskPtr>
 __host__ void gridReduceToColumn(const SrcPtr& src, GpuMat_<ResType>& dst, const MaskPtr& mask, Stream& stream = Stream::Null())
 {
-    gridReduceToColumn_<Reductor, DefaultReduceToVecPolicy>(src, dst, mask, stream);
+    gridReduceToColumn_<Reductor, ReductorGatherer, DefaultReduceToVecPolicy>(src, dst, mask, stream);
 }
 
-template <class Reductor, class SrcPtr, typename ResType>
+template <class Reductor, class ReductorGatherer, class SrcPtr, typename ResType>
 __host__ void gridReduceToColumn(const SrcPtr& src, GpuMat_<ResType>& dst, Stream& stream = Stream::Null())
 {
-    gridReduceToColumn_<Reductor, DefaultReduceToVecPolicy>(src, dst, stream);
+    gridReduceToColumn_<Reductor, ReductorGatherer, DefaultReduceToVecPolicy>(src, dst, stream);
 }
 
 //! @}

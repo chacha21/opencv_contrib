@@ -285,6 +285,37 @@ namespace grid_reduce_detail
         }
     };
 
+    // Sum2Reductor
+
+    template <typename src_type, typename work_type> struct Sum2Reductor
+    {
+        typedef typename VecTraits<work_type>::elem_type work_elem_type;
+        enum { cn = VecTraits<src_type>::cn };
+
+        work_type sum2;
+
+        __device__ __forceinline__ Sum2Reductor()
+        {
+            sum2 = VecTraits<work_type>::all(0);
+        }
+
+        __device__ __forceinline__ void reduceVal(typename TypeTraits<src_type>::parameter_type srcVal)
+        {
+            sum2 = sum2 + saturate_cast<work_type>(srcVal)*saturate_cast<work_type>(srcVal);
+        }
+
+        template <int BLOCK_SIZE>
+        __device__ void reduceGrid(work_elem_type* result, int tid)
+        {
+            __shared__ work_elem_type smem[BLOCK_SIZE * cn];
+
+            blockReduce<BLOCK_SIZE>(Unroll<cn>::template smem<BLOCK_SIZE>(smem), Unroll<cn>::res(sum2), tid, Unroll<cn>::op(Composer2nd<sqr<work_elem_type>, plus<work_elem_type> >()));
+
+            if (tid == 0)
+                AtomicUnroll<work_elem_type, cn>::add(result, sum2);
+        }
+    };
+
     // MinMaxReductor
 
     template <typename T> struct minop : minimum<T>
@@ -388,7 +419,7 @@ namespace grid_reduce_detail
 
     // glob_reduce
 
-    template <class Reductor, int BLOCK_SIZE, int PATCH_X, int PATCH_Y, class SrcPtr, typename ResType, class MaskPtr>
+    template <class Reductor, class ReductorGatherer, int BLOCK_SIZE, int PATCH_X, int PATCH_Y, class SrcPtr, typename ResType, class MaskPtr>
     __global__ void reduce(const SrcPtr src, ResType* result, const MaskPtr mask, const int rows, const int cols)
     {
         const int x0 = blockIdx.x * blockDim.x * PATCH_X + threadIdx.x;
@@ -412,13 +443,13 @@ namespace grid_reduce_detail
         reductor.template reduceGrid<BLOCK_SIZE>(result, tid);
     }
 
-    template <class Reductor, class Policy, class SrcPtr, typename ResType, class MaskPtr>
+    template <class Reductor, class ReductorGatherer, class Policy, class SrcPtr, typename ResType, class MaskPtr>
     __host__ void reduce(const SrcPtr& src, ResType* result, const MaskPtr& mask, int rows, int cols, cudaStream_t stream)
     {
         const dim3 block(Policy::block_size_x, Policy::block_size_y);
         const dim3 grid(divUp(cols, block.x * Policy::patch_size_x), divUp(rows, block.y * Policy::patch_size_y));
 
-        reduce<Reductor, Policy::block_size_x * Policy::block_size_y, Policy::patch_size_x, Policy::patch_size_y><<<grid, block, 0, stream>>>(src, result, mask, rows, cols);
+        reduce<Reductor, ReductorGatherer, Policy::block_size_x * Policy::block_size_y, Policy::patch_size_x, Policy::patch_size_y><<<grid, block, 0, stream>>>(src, result, mask, rows, cols);
         CV_CUDEV_SAFE_CALL( cudaGetLastError() );
 
         if (stream == 0)
@@ -433,7 +464,16 @@ namespace grid_reduce_detail
         typedef typename PtrTraits<SrcPtr>::value_type src_type;
         typedef typename VecTraits<ResType>::elem_type res_elem_type;
 
-        reduce<SumReductor<src_type, ResType>, Policy>(src, (res_elem_type*) result, mask, rows, cols, stream);
+        reduce<SumReductor<src_type, ResType>, SumReductor<src_type, ResType>, Policy>(src, (res_elem_type*) result, mask, rows, cols, stream);
+    }
+
+    template <class Policy, class SrcPtr, typename ResType, class MaskPtr>
+    __host__ void sum2(const SrcPtr& src, ResType* result, const MaskPtr& mask, int rows, int cols, cudaStream_t stream)
+    {
+        typedef typename PtrTraits<SrcPtr>::value_type src_type;
+        typedef typename VecTraits<ResType>::elem_type res_elem_type;
+
+        reduce<Sum2Reductor<src_type, ResType>, SumReductor<src_type, ResType>, Policy>(src, (res_elem_type*) result, mask, rows, cols, stream);
     }
 
     template <class Policy, class SrcPtr, typename ResType, class MaskPtr>
@@ -441,7 +481,7 @@ namespace grid_reduce_detail
     {
         typedef typename PtrTraits<SrcPtr>::value_type src_type;
 
-        reduce<MinMaxReductor<minop<ResType>, src_type, ResType>, Policy>(src, result, mask, rows, cols, stream);
+        reduce<MinMaxReductor<minop<ResType>, src_type, ResType>, MinMaxReductor<minop<ResType>, src_type, ResType>, Policy>(src, result, mask, rows, cols, stream);
     }
 
     template <class Policy, class SrcPtr, typename ResType, class MaskPtr>
@@ -449,7 +489,7 @@ namespace grid_reduce_detail
     {
         typedef typename PtrTraits<SrcPtr>::value_type src_type;
 
-        reduce<MinMaxReductor<maxop<ResType>, src_type, ResType>, Policy>(src, result, mask, rows, cols, stream);
+        reduce<MinMaxReductor<maxop<ResType>, src_type, ResType>, MinMaxReductor<maxop<ResType>, src_type, ResType>, Policy>(src, result, mask, rows, cols, stream);
     }
 
     template <class Policy, class SrcPtr, typename ResType, class MaskPtr>
@@ -457,7 +497,7 @@ namespace grid_reduce_detail
     {
         typedef typename PtrTraits<SrcPtr>::value_type src_type;
 
-        reduce<MinMaxReductor<both, src_type, ResType>, Policy>(src, result, mask, rows, cols, stream);
+        reduce<MinMaxReductor<both, src_type, ResType>, MinMaxReductor<both, src_type, ResType>, Policy>(src, result, mask, rows, cols, stream);
     }
 }
 

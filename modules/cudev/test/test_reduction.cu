@@ -160,7 +160,7 @@ TEST(ReduceToRow, Sum)
 
     GpuMat_<uchar> d_src(src);
 
-    GpuMat_<int> dst = reduceToRow_<Sum<int> >(d_src);
+    GpuMat_<int> dst = reduceToRow_<Sum<int>, Sum<int> >(d_src);
 
     Mat dst_gold;
     cv::reduce(src, dst_gold, 0, REDUCE_SUM, CV_32S);
@@ -176,7 +176,7 @@ TEST(ReduceToRow, Avg)
 
     GpuMat_<uchar> d_src(src);
 
-    GpuMat_<float> dst = reduceToRow_<Avg<float> >(d_src);
+    GpuMat_<float> dst = reduceToRow_<Avg<float>, Avg<float> >(d_src);
 
     Mat dst_gold;
     cv::reduce(src, dst_gold, 0, REDUCE_AVG, CV_32F);
@@ -192,7 +192,7 @@ TEST(ReduceToRow, Min)
 
     GpuMat_<uchar> d_src(src);
 
-    GpuMat_<uchar> dst = reduceToRow_<Min<uchar> >(d_src);
+    GpuMat_<uchar> dst = reduceToRow_<Min<uchar>, Min<uchar> >(d_src);
 
     Mat dst_gold;
     cv::reduce(src, dst_gold, 0, REDUCE_MIN);
@@ -208,7 +208,7 @@ TEST(ReduceToRow, Max)
 
     GpuMat_<uchar> d_src(src);
 
-    GpuMat_<uchar> dst = reduceToRow_<Max<uchar> >(d_src);
+    GpuMat_<uchar> dst = reduceToRow_<Max<uchar>, Max<uchar> >(d_src);
 
     Mat dst_gold;
     cv::reduce(src, dst_gold, 0, REDUCE_MAX);
@@ -224,10 +224,10 @@ TEST(ReduceToRow, Sum2)
 
     GpuMat_<uchar> d_src(src);
 
-    GpuMat_<float> dst = reduceToRow_<Sum2<float> >(d_src);
+    GpuMat_<int> dst = reduceToRow_<Sum2<int>, Sum<int> >(d_src);
 
     Mat dst_gold;
-    cv::reduce(src, dst_gold, 0, REDUCE_SUM2, CV_32F);
+    cv::reduce(src, dst_gold, 0, REDUCE_SUM2, CV_32S);
 
     EXPECT_MAT_NEAR(dst_gold, dst, 1e-4);
 }
@@ -241,7 +241,7 @@ TEST(ReduceToColumn, Sum)
 
     GpuMat_<uchar> d_src(src);
 
-    GpuMat_<int> dst = reduceToColumn_<Sum<int> >(d_src);
+    GpuMat_<int> dst = reduceToColumn_<Sum<int>, Sum<int> >(d_src);
 
     Mat dst_gold;
     cv::reduce(src, dst_gold, 1, REDUCE_SUM, CV_32S);
@@ -257,7 +257,7 @@ TEST(ReduceToColumn, Avg)
 
     GpuMat_<uchar> d_src(src);
 
-    GpuMat_<float> dst = reduceToColumn_<Avg<float> >(d_src);
+    GpuMat_<float> dst = reduceToColumn_<Avg<float>, Avg<float> >(d_src);
 
     Mat dst_gold;
     cv::reduce(src, dst_gold, 1, REDUCE_AVG, CV_32F);
@@ -273,7 +273,7 @@ TEST(ReduceToColumn, Min)
 
     GpuMat_<uchar> d_src(src);
 
-    GpuMat_<uchar> dst = reduceToColumn_<Min<uchar> >(d_src);
+    GpuMat_<uchar> dst = reduceToColumn_<Min<uchar>, Min<uchar> >(d_src);
 
     Mat dst_gold;
     cv::reduce(src, dst_gold, 1, REDUCE_MIN);
@@ -289,7 +289,7 @@ TEST(ReduceToColumn, Max)
 
     GpuMat_<uchar> d_src(src);
 
-    GpuMat_<uchar> dst = reduceToColumn_<Max<uchar> >(d_src);
+    GpuMat_<uchar> dst = reduceToColumn_<Max<uchar>, Max<uchar> >(d_src);
 
     Mat dst_gold;
     cv::reduce(src, dst_gold, 1, REDUCE_MAX);
@@ -305,7 +305,7 @@ TEST(ReduceToColumn, Sum2)
 
     GpuMat_<uchar> d_src(src);
 
-    GpuMat_<uchar> dst = reduceToColumn_<Sum2<uchar> >(d_src);
+    GpuMat_<int> dst = reduceToColumn_<Sum2<int>, Sum<int> >(d_src);
 
     Mat dst_gold;
     cv::reduce(src, dst_gold, 1, REDUCE_SUM2);

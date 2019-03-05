@@ -54,9 +54,9 @@ namespace cv { namespace cudev {
 
 namespace grid_reduce_to_vec_detail
 {
-    template <int BLOCK_SIZE, typename work_type, typename work_elem_type, class Reductor, int cn> struct Reduce;
+    template <int BLOCK_SIZE, typename work_type, typename work_elem_type, class Reductor, class ReductorGatherer, int cn> struct Reduce;
 
-    template <int BLOCK_SIZE, typename work_type, typename work_elem_type, class Reductor> struct Reduce<BLOCK_SIZE, work_type, work_elem_type, Reductor, 1>
+    template <int BLOCK_SIZE, typename work_type, typename work_elem_type, class Reductor, class ReductorGatherer> struct Reduce<BLOCK_SIZE, work_type, work_elem_type, Reductor, ReductorGatherer, 1>
     {
         __device__ __forceinline__ static void call(work_elem_type smem[1][BLOCK_SIZE], work_type& myVal)
         {
@@ -65,7 +65,7 @@ namespace grid_reduce_to_vec_detail
         }
     };
 
-    template <int BLOCK_SIZE, typename work_type, typename work_elem_type, class Reductor> struct Reduce<BLOCK_SIZE, work_type, work_elem_type, Reductor, 2>
+    template <int BLOCK_SIZE, typename work_type, typename work_elem_type, class Reductor, class ReductorGatherer> struct Reduce<BLOCK_SIZE, work_type, work_elem_type, Reductor, ReductorGatherer, 2>
     {
         __device__ __forceinline__ static void call(work_elem_type smem[2][BLOCK_SIZE], work_type& myVal)
         {
@@ -74,7 +74,7 @@ namespace grid_reduce_to_vec_detail
         }
     };
 
-    template <int BLOCK_SIZE, typename work_type, typename work_elem_type, class Reductor> struct Reduce<BLOCK_SIZE, work_type, work_elem_type, Reductor, 3>
+    template <int BLOCK_SIZE, typename work_type, typename work_elem_type, class Reductor, class ReductorGatherer> struct Reduce<BLOCK_SIZE, work_type, work_elem_type, Reductor, ReductorGatherer, 3>
     {
         __device__ __forceinline__ static void call(work_elem_type smem[3][BLOCK_SIZE], work_type& myVal)
         {
@@ -83,7 +83,7 @@ namespace grid_reduce_to_vec_detail
         }
     };
 
-    template <int BLOCK_SIZE, typename work_type, typename work_elem_type, class Reductor> struct Reduce<BLOCK_SIZE, work_type, work_elem_type, Reductor, 4>
+    template <int BLOCK_SIZE, typename work_type, typename work_elem_type, class Reductor, class ReductorGatherer> struct Reduce<BLOCK_SIZE, work_type, work_elem_type, Reductor, ReductorGatherer, 4>
     {
         __device__ __forceinline__ static void call(work_elem_type smem[4][BLOCK_SIZE], work_type& myVal)
         {
@@ -92,7 +92,7 @@ namespace grid_reduce_to_vec_detail
         }
     };
 
-    template <class Reductor, int BLOCK_SIZE, class SrcPtr, typename ResType, class MaskPtr>
+    template <class Reductor, class ReductorGatherer, int BLOCK_SIZE, class SrcPtr, typename ResType, class MaskPtr>
     __global__ void reduceToColumn(const SrcPtr src, ResType* dst, const MaskPtr mask, const int cols)
     {
         typedef typename Reductor::work_type work_type;
@@ -115,13 +115,13 @@ namespace grid_reduce_to_vec_detail
             }
         }
 
-        Reduce<BLOCK_SIZE, work_type, work_elem_type, Reductor, cn>::call(smem, myVal);
+        Reduce<BLOCK_SIZE, work_type, work_elem_type, ReductorGatherer, ReductorGatherer, cn>::call(smem, myVal);
 
         if (threadIdx.x == 0)
             dst[y] = saturate_cast<ResType>(Reductor::result(myVal, cols));
     }
 
-    template <class Reductor, class Policy, class SrcPtr, typename ResType, class MaskPtr>
+    template <class Reductor, class ReductorGatherer, class Policy, class SrcPtr, typename ResType, class MaskPtr>
     __host__ void reduceToColumn(const SrcPtr& src, ResType* dst, const MaskPtr& mask, int rows, int cols, cudaStream_t stream)
     {
         const int BLOCK_SIZE_X = Policy::block_size_x;
@@ -132,7 +132,7 @@ namespace grid_reduce_to_vec_detail
         const dim3 block(BLOCK_SIZE);
         const dim3 grid(rows);
 
-        reduceToColumn<Reductor, BLOCK_SIZE><<<grid, block, 0, stream>>>(src, dst, mask, cols);
+        reduceToColumn<Reductor, ReductorGatherer, BLOCK_SIZE><<<grid, block, 0, stream>>>(src, dst, mask, cols);
         CV_CUDEV_SAFE_CALL( cudaGetLastError() );
 
         if (stream == 0)

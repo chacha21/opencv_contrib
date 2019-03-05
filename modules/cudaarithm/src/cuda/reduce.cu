@@ -67,23 +67,23 @@ namespace
         switch (reduceOp)
         {
         case cv::REDUCE_SUM:
-            gridReduceToRow< Sum<S> >(src, dst, stream);
+            gridReduceToRow< Sum<S>, Sum<S> >(src, dst, stream);
             break;
 
         case cv::REDUCE_AVG:
-            gridReduceToRow< Avg<S> >(src, dst, stream);
+            gridReduceToRow< Avg<S>, Avg<S> >(src, dst, stream);
             break;
 
         case cv::REDUCE_MIN:
-            gridReduceToRow< Min<S> >(src, dst, stream);
+            gridReduceToRow< Min<S>, Min<S> >(src, dst, stream);
             break;
 
         case cv::REDUCE_MAX:
-            gridReduceToRow< Max<S> >(src, dst, stream);
+            gridReduceToRow< Max<S>, Max<S> >(src, dst, stream);
             break;
 
         case cv::REDUCE_SUM2:
-            gridReduceToRow< Sum2<S> >(src, dst, stream);
+            gridReduceToRow< Sum2<S>, Sum<S> >(src, dst, stream);
             break;
         };
     }
@@ -97,23 +97,23 @@ namespace
         switch (reduceOp)
         {
         case cv::REDUCE_SUM:
-            gridReduceToColumn< Sum<S> >(src, dst, stream);
+            gridReduceToColumn< Sum<S>, Sum<S> >(src, dst, stream);
             break;
 
         case cv::REDUCE_AVG:
-            gridReduceToColumn< Avg<S> >(src, dst, stream);
+            gridReduceToColumn< Avg<S>, Avg<S> >(src, dst, stream);
             break;
 
         case cv::REDUCE_MIN:
-            gridReduceToColumn< Min<S> >(src, dst, stream);
+            gridReduceToColumn< Min<S>, Min<S> >(src, dst, stream);
             break;
 
         case cv::REDUCE_MAX:
-            gridReduceToColumn< Max<S> >(src, dst, stream);
+            gridReduceToColumn< Max<S>, Max<S> >(src, dst, stream);
             break;
 
         case cv::REDUCE_SUM2:
-            gridReduceToColumn< Sum2<S> >(src, dst, stream);
+            gridReduceToColumn< Sum2<S>, Sum<S> >(src, dst, stream);
             break;
         };
     }
